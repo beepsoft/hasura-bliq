@@ -1,0 +1,440 @@
+schema {
+  query: query_root
+  mutation: mutation_root
+  subscription: subscription_root
+}
+
+# expression to compare columns of type Int. All fields are combined with logical 'AND'.
+input Int_comparison_exp {
+  _eq: Int
+  _gt: Int
+  _gte: Int
+  _in: [Int!]
+  _is_null: Boolean
+  _lt: Int
+  _lte: Int
+  _neq: Int
+  _nin: [Int!]
+}
+
+# columns and relationships of "message"
+type message {
+  createdAt: timestamp
+  id: ID!
+  message: String!
+  updatedAt: timestamp
+}
+
+# aggregated selection of "message"
+type message_aggregate {
+  aggregate: message_aggregate_fields
+  nodes: [message!]!
+}
+
+# aggregate fields of "message"
+type message_aggregate_fields {
+  avg: message_avg_fields
+  count(columns: [message_select_column!], distinct: Boolean): Int
+  max: message_max_fields
+  min: message_min_fields
+  stddev: message_stddev_fields
+  stddev_pop: message_stddev_pop_fields
+  stddev_samp: message_stddev_samp_fields
+  sum: message_sum_fields
+  var_pop: message_var_pop_fields
+  var_samp: message_var_samp_fields
+  variance: message_variance_fields
+}
+
+# order by aggregate values of table "message"
+input message_aggregate_order_by {
+  avg: message_avg_order_by
+  count: order_by
+  max: message_max_order_by
+  min: message_min_order_by
+  stddev: message_stddev_order_by
+  stddev_pop: message_stddev_pop_order_by
+  stddev_samp: message_stddev_samp_order_by
+  sum: message_sum_order_by
+  var_pop: message_var_pop_order_by
+  var_samp: message_var_samp_order_by
+  variance: message_variance_order_by
+}
+
+# input type for inserting array relation for remote table "message"
+input message_arr_rel_insert_input {
+  data: [message_insert_input!]!
+  on_conflict: message_on_conflict
+}
+
+# aggregate avg on columns
+type message_avg_fields {
+  id: Float
+}
+
+# order by avg() on columns of table "message"
+input message_avg_order_by {
+  id: order_by
+}
+
+# Boolean expression to filter rows from the table "message". All fields are combined with a logical 'AND'.
+input message_bool_exp {
+  _and: [message_bool_exp]
+  _not: message_bool_exp
+  _or: [message_bool_exp]
+  createdAt: timestamp_comparison_exp
+  id: Int_comparison_exp
+  message: String_comparison_exp
+  updatedAt: timestamp_comparison_exp
+}
+
+# unique or primary key constraints on table "message"
+enum message_constraint {
+  # unique or primary key constraint
+  message_pkey
+}
+
+# input type for incrementing integer columne in table "message"
+input message_inc_input {
+  id: Int
+}
+
+# input type for inserting data into table "message"
+input message_insert_input {
+  createdAt: timestamp
+  id: Int
+  message: String
+  updatedAt: timestamp
+}
+
+# aggregate max on columns
+type message_max_fields {
+  id: Int
+  message: String
+}
+
+# order by max() on columns of table "message"
+input message_max_order_by {
+  id: order_by
+  message: order_by
+}
+
+# aggregate min on columns
+type message_min_fields {
+  id: Int
+  message: String
+}
+
+# order by min() on columns of table "message"
+input message_min_order_by {
+  id: order_by
+  message: order_by
+}
+
+# response of any mutation on the table "message"
+type message_mutation_response {
+  # number of affected rows by the mutation
+  affected_rows: Int!
+
+  # data of the affected rows by the mutation
+  returning: [message!]!
+}
+
+# input type for inserting object relation for remote table "message"
+input message_obj_rel_insert_input {
+  data: message_insert_input!
+  on_conflict: message_on_conflict
+}
+
+# on conflict condition type for table "message"
+input message_on_conflict {
+  constraint: message_constraint!
+  update_columns: [message_update_column!]!
+  where: message_bool_exp
+}
+
+# ordering options when selecting data from "message"
+input message_order_by {
+  createdAt: order_by
+  id: order_by
+  message: order_by
+  updatedAt: order_by
+}
+
+# select columns of table "message"
+enum message_select_column {
+  # column name
+  createdAt
+
+  # column name
+  id
+
+  # column name
+  message
+
+  # column name
+  updatedAt
+}
+
+# input type for updating data in table "message"
+input message_set_input {
+  createdAt: timestamp
+  id: Int
+  message: String
+  updatedAt: timestamp
+}
+
+# aggregate stddev on columns
+type message_stddev_fields {
+  id: Float
+}
+
+# order by stddev() on columns of table "message"
+input message_stddev_order_by {
+  id: order_by
+}
+
+# aggregate stddev_pop on columns
+type message_stddev_pop_fields {
+  id: Float
+}
+
+# order by stddev_pop() on columns of table "message"
+input message_stddev_pop_order_by {
+  id: order_by
+}
+
+# aggregate stddev_samp on columns
+type message_stddev_samp_fields {
+  id: Float
+}
+
+# order by stddev_samp() on columns of table "message"
+input message_stddev_samp_order_by {
+  id: order_by
+}
+
+# aggregate sum on columns
+type message_sum_fields {
+  id: Int
+}
+
+# order by sum() on columns of table "message"
+input message_sum_order_by {
+  id: order_by
+}
+
+# update columns of table "message"
+enum message_update_column {
+  # column name
+  createdAt
+
+  # column name
+  id
+
+  # column name
+  message
+
+  # column name
+  updatedAt
+}
+
+# aggregate var_pop on columns
+type message_var_pop_fields {
+  id: Float
+}
+
+# order by var_pop() on columns of table "message"
+input message_var_pop_order_by {
+  id: order_by
+}
+
+# aggregate var_samp on columns
+type message_var_samp_fields {
+  id: Float
+}
+
+# order by var_samp() on columns of table "message"
+input message_var_samp_order_by {
+  id: order_by
+}
+
+# aggregate variance on columns
+type message_variance_fields {
+  id: Float
+}
+
+# order by variance() on columns of table "message"
+input message_variance_order_by {
+  id: order_by
+}
+
+# mutation root
+type mutation_root {
+  # delete data from the table: "message"
+  delete_message(
+    # filter the rows which have to be deleted
+    where: message_bool_exp!
+  ): message_mutation_response
+
+  # insert data into the table: "message"
+  insert_message(
+    # the rows to be inserted
+    objects: [message_insert_input!]!
+
+    # on conflict condition
+    on_conflict: message_on_conflict
+  ): message_mutation_response
+
+  # update data of the table: "message"
+  update_message(
+    # increments the integer columns with given value of the filtered values
+    _inc: message_inc_input
+
+    # sets the columns of the filtered rows to the given values
+    _set: message_set_input
+
+    # filter the rows which have to be updated
+    where: message_bool_exp!
+  ): message_mutation_response
+}
+
+# column ordering options
+enum order_by {
+  # in the ascending order, nulls last
+  asc
+
+  # in the ascending order, nulls first
+  asc_nulls_first
+
+  # in the ascending order, nulls last
+  asc_nulls_last
+
+  # in the descending order, nulls first
+  desc
+
+  # in the descending order, nulls first
+  desc_nulls_first
+
+  # in the descending order, nulls last
+  desc_nulls_last
+}
+
+# query root
+type query_root {
+  # fetch data from the table: "message"
+  message(
+    # distinct select on columns
+    distinct_on: [message_select_column!]
+
+    # limit the number of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [message_order_by!]
+
+    # filter the rows returned
+    where: message_bool_exp
+  ): [message!]!
+
+  # fetch aggregated fields from the table: "message"
+  message_aggregate(
+    # distinct select on columns
+    distinct_on: [message_select_column!]
+
+    # limit the number of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [message_order_by!]
+
+    # filter the rows returned
+    where: message_bool_exp
+  ): message_aggregate!
+
+  # fetch data from the table: "message" using primary key columns
+  message_by_pk(id: Int!): message
+}
+
+# expression to compare columns of type String. All fields are combined with logical 'AND'.
+input String_comparison_exp {
+  _eq: String
+  _gt: String
+  _gte: String
+  _ilike: String
+  _in: [String!]
+  _is_null: Boolean
+  _like: String
+  _lt: String
+  _lte: String
+  _neq: String
+  _nilike: String
+  _nin: [String!]
+  _nlike: String
+  _nsimilar: String
+  _similar: String
+}
+
+# subscription root
+type subscription_root {
+  # fetch data from the table: "message"
+  message(
+    # distinct select on columns
+    distinct_on: [message_select_column!]
+
+    # limit the number of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [message_order_by!]
+
+    # filter the rows returned
+    where: message_bool_exp
+  ): [message!]!
+
+  # fetch aggregated fields from the table: "message"
+  message_aggregate(
+    # distinct select on columns
+    distinct_on: [message_select_column!]
+
+    # limit the number of rows returned
+    limit: Int
+
+    # skip the first n rows. Use only with order_by
+    offset: Int
+
+    # sort the rows by one or more columns
+    order_by: [message_order_by!]
+
+    # filter the rows returned
+    where: message_bool_exp
+  ): message_aggregate!
+
+  # fetch data from the table: "message" using primary key columns
+  message_by_pk(id: Int!): message
+}
+
+scalar timestamp
+
+# expression to compare columns of type timestamp. All fields are combined with logical 'AND'.
+input timestamp_comparison_exp {
+  _eq: timestamp
+  _gt: timestamp
+  _gte: timestamp
+  _in: [timestamp!]
+  _is_null: Boolean
+  _lt: timestamp
+  _lte: timestamp
+  _neq: timestamp
+  _nin: [timestamp!]
+}
+

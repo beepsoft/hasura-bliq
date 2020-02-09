@@ -1,0 +1,45 @@
+version: "3"
+services:
+  postgresql:
+    #   Use the Docker Image postgres. This will pull the newest release.
+    image: "postgres:11.5-alpine"
+    #   Give the container the name my_postgres. You can changes to something else.
+    container_name: "hasura-hooks-postgresql"
+    #command: ["postgres", "-c", "log_statement=all"]
+    #   Setup the username, password, and database name. You can changes these values.
+    environment:
+      POSTGRES_USER: hasura-hooks
+      POSTGRES_PASSWORD: hasura-hooks
+      POSTGRES_DB: hasura-hooks
+    #   Maps port 54320 (localhost) to port 5432 on the container. You can change the ports to fix your needs.
+    ports:
+      - "5441:5432"
+    #   Set a volume some that database is not lost after shutting down the container.
+    #   I used the name po ;stgres-data but you can changed it to something else.
+    volumes:
+      - ./.postgres-data:/var/lib/postgresql/data
+      - ./postgresql-init/init.sql:/docker-entrypoint-initdb.d/init.sql
+  hasura:
+    image: "hasura/graphql-engine:v1.0.0.cli-migrations"
+    container_name: "hasura-hooks-hasura"
+    ports:
+      - "6001:8080"
+    depends_on:
+      - "postgresql"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://hasura-hooks:hasura-hooks@host.docker.internal:5441/hasura-hooks
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_JWT_SECRET: "{\"type\": \"HS512\", \"key\": \"JWTSuperSecretKeyJWTSuperSecretKeyJWTSuperSecretKeyJWTSuperSecretKey\"}"
+      HASURA_GRAPHQL_ACCESS_KEY: hasura-hooks
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+    volumes:
+    - ./hasura-migrations:/hasura-migrations
+  adminer:
+    image: "adminer"
+    container_name: "hasura-hooks-adminer"
+    restart: always
+    ports:
+      - 6002:8080
+

@@ -1,0 +1,67 @@
+{
+  "name": "hasura-hooks-example",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@types/jest": "^24.0.0",
+    "@types/node": "^12.0.0",
+    "@types/react": "^16.9.0",
+    "@types/react-dom": "^16.9.0",
+    "@types/react-router": "^5.1.4",
+    "@types/ws": "^7.2.1",
+    "graphql-tag": "^2.10.3",
+    "mobx": "^5.15.4",
+    "mobx-devtools-mst": "^0.9.21",
+    "mobx-react": "^6.1.7",
+    "mobx-state-tree": "^3.15.0",
+    "mst-gql": "https://github.com/beepsoft/mst-gql#mst-gql-v0.7.1-pr155-gitpkg",
+    "mst-middlewares": "^3.15.0",
+    "mst-react-router": "^2.3.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-router": "^5.1.2",
+    "react-scripts": "3.3.1",
+    "remotedev": "^0.2.9",
+    "subscriptions-transport-ws": "^0.9.16",
+    "typescript": "~3.7.2",
+    "ws": "^7.2.1"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^3.1.0",
+    "graphqurl": "^0.3.3",
+    "relative-deps": "^1.0.0"
+  },
+  "relativeDependencies": {
+    "hasura-hooks": "../../"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "prepare": "relative-deps",
+    "prestart": "relative-deps",
+    "prebuild": "relative-deps",
+    "pretest": "relative-deps",
+    "gql:dl": "gq `dotenv -p REACT_APP_GRAPHQL_URL` -H \"X-Hasura-Admin-Secret: `dotenv -p REACT_APP_HASURA_ADMIN_SECRET`\" --introspect > schema.graphql && sed  's/  id: Int!/  id: ID!/g' schema.graphql > schema.graphql.fixed && mv schema.graphql.fixed schema.graphql",
+    "gql:gen": "mst-gql --format ts --namingConvention js --outDir src/models schema.graphql"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
