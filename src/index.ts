@@ -1,5 +1,4 @@
 import React, {useEffect, useRef, useState} from "react"
-import {StoreType} from "mst-gql/dist/MSTGQLStore";
 import {
   ArgumentNode,
   DocumentNode,
@@ -7,25 +6,24 @@ import {
   IntValueNode,
   OperationDefinitionNode,
   print,
-  SelectionNode
+  SelectionNode, VariableDefinitionNode
 } from "graphql"
-import {getEnv} from "mobx-state-tree";
 import {SubscriptionClient} from "subscriptions-transport-ws";
+import {GraphQLClient} from "graphql-request";
+import to from "await-to-js";
+import moment from "moment";
 
 // https://github.com/hasura/graphql-engine/issues/2735
+// https://github.com/hasura/graphql-engine/issues/3517
 
-export type QueryConfig = {
-  // Name if the ID field to have in the selection set
-  idField?: string;
-  // Name of the field to check for changes
-  timestampField?: string;
 
-  // Date value to start checking changes at
-  startDate?: string;
-
-  // Name of variable with the date value to start checking changes at
-  startDateVariable?: string;
-}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+// Private API
+//
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum PrepareTarget {
   Subscription,
@@ -41,11 +39,8 @@ enum PrepareTarget {
  */
 function prepareDeltaQuery(
   query: DocumentNode,
-  config : QueryConfig = {
-    idField:"id",
-    timestampField:"updatedAt",
-    startDateVariable: "startDate"
-  })
+  config : QueryConfig
+)
 {
   return prepareQuery(PrepareTarget.Delta, query, config);
 }
@@ -61,11 +56,8 @@ function prepareDeltaQuery(
  */
 function prepareSubscriptionQuery(
   query: DocumentNode,
-  config : QueryConfig = {
-    idField:"id",
-    timestampField:"updatedAt",
-    startDateVariable: "startDate"
-  })
+  config : QueryConfig
+)
 {
   return prepareQuery(PrepareTarget.Subscription, query, config);
 }
@@ -79,11 +71,8 @@ function prepareSubscriptionQuery(
 function prepareQuery(
   target: PrepareTarget,
   query: DocumentNode,
-  config : QueryConfig = {
-    idField:"id",
-    timestampField:"updatedAt",
-    startDateVariable: "startDate"
-  })
+  config : QueryConfig
+)
 {
   var queryCopy = JSON.parse(JSON.stringify(query))
 
@@ -93,6 +82,28 @@ function prepareQuery(
     if (target == PrepareTarget.Subscription) {
       (node.operation as any) = "subscription"
     }
+
+    (node.variableDefinitions as Array<VariableDefinitionNode>).push(
+      {
+        kind: "VariableDefinition",
+        variable: {
+          kind: "Variable",
+          name: {
+            kind: "Name",
+            value: config.startDateVariable
+          }
+        },
+        type: {
+          kind: "NamedType",
+          name: {
+            kind: "Name",
+            value: config.timestampFieldType
+          }
+        },
+        "directives": []
+      } as any
+    )
+
 
     //console.log("node.selectionSet", node.selectionSet.selections[0]);
     if (node.selectionSet.selections[0].kind == "Field") {
@@ -178,7 +189,6 @@ function prepareQuery(
       }
 
       return queryCopy;
-
     }
     else {
       throw new Error(`Query is not well formed: queryCopy.definitions[0].selectionSet.selections[0].kind != "Field"`);
@@ -197,25 +207,6 @@ function prepareQuery(
  */
 function prepareWhereClause(where: ArgumentNode, config: QueryConfig)
 {
-  // If startDate specified, than have a static StringValue node,
-  // otherwise a Variable node with config.startDateVariable
-  console.log("prepareWhereClause config.startDate", config.startDate)
-  const greaterThanValue = (config.startDate
-    ?
-    {
-      kind: "StringValue",
-      value: config.startDate,
-      block: false
-    }
-    :
-    {
-      kind: "Variable",
-      name: {
-        kind: "Name",
-        value: `${config.startDateVariable}`
-      }
-    })
-
   // The start date expression
   const startDateCond = {
     kind: "ObjectValue",
@@ -235,7 +226,13 @@ function prepareWhereClause(where: ArgumentNode, config: QueryConfig)
                 kind: "Name",
                 value: "_gt"
               },
-              value: greaterThanValue
+              value: {
+                kind: "Variable",
+                name: {
+                  kind: "Name",
+                  value: `${config.startDateVariable}`
+                }
+              }
             }
           ]
         }
@@ -263,7 +260,7 @@ function prepareWhereClause(where: ArgumentNode, config: QueryConfig)
 
   // where.value is readonly, use any cast hack
   (where.value as any) = ands;
-  console.log("ands", ands)
+  //console.log("ands", ands)
 }
 
 function getFirstValue(data: any) {
@@ -275,167 +272,192 @@ function getFirstValue(data: any) {
   return data[keys[0]]
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//
+// Public API
+//
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+      "variableDefinitions": [
+        {
+          "kind": "VariableDefinition",
+          "variable": {
+            "kind": "Variable",
+            "name": {
+              "kind": "Name",
+              "value": "someDate"
+            }
+          },
+          "type": {
+            "kind": "NamedType",
+            "name": {
+              "kind": "Name",
+              "value": "timestamp"
+            }
+          },
+          "directives": []
+        }
+      ],
+
+ */
+export type QueryConfig = {
+  // Name if the ID field to have in the selection set
+  idField?: string;
+  // Name of the field to check for changes
+  timestampField?: string;
+
+  // Type of the timestampField
+  timestampFieldType?: string;
+
+  // Date value to start checking changes at
+  startDate?: string;
+
+  // Name of variable with the date value to start checking changes at
+  startDateVariable?: string;
+}
+
 export type SubscriptionParams<T> = {
-  store: StoreType;
+  gqlWsClient: SubscriptionClient;
+  gqlHttpClient: GraphQLClient;
   query: DocumentNode;
+  startDate?: string;
   config?: QueryConfig;
   variables?: {
-    startDate: string;
     [k: string]: any;
   };
   onData?: (item: T) => void;
-  dependencies?: Array<string>;
+  debug?: boolean
 }
 
 export function useSubscription<T>(params: SubscriptionParams<T>)
 {
-  const {store, variables, query, onData,
-    config={
-      idField:"id",
-      timestampField:"updatedAt",
-      startDateVariable: "startDate",
-    },
-    dependencies=[]} = params;
+  const debugLog = (msg: string, obj?: any) =>
+  {
+    if (params.debug) {
+      console.log("-- useSubscription: "+msg, obj);
+    }
+  }
 
+  debugLog("called", params);
+
+  const {gqlWsClient, gqlHttpClient,  query, variables, onData,
+    config={},
+    startDate = moment().utc().format()
+  } = params;
+
+  // Set default values
   if (!config.idField) {
     config.idField = "id";
   }
   if (!config.timestampField) {
     config.timestampField = "updatedAt";
   }
+  if (!config.timestampFieldType) {
+    config.timestampFieldType = "timestamp";
+  }
   if (!config.startDateVariable) {
-    config.startDateVariable = "startDate";
+    config.startDateVariable = "__startDate";
   }
 
-  console.log("config", config);
-  // Get the configured WS client from the store
-  const {
-    gqlWsClient
-  }: {
-    gqlWsClient: SubscriptionClient
-  } = getEnv(store)
+  const [lastStartDate, setLastStartDate] = useState(startDate)
+  const [finished, setFinished] = useState(false)
+
+  // Save a ref to an unsubscribe function which can be called indirectly by the
+  // invoker of  useSubscription() to finish subscriptions
+  const subscription = useRef<{unsubscribe?: () => any}>({});
+
+  // Make sure config contains the lastStartDate we start from
+  config.startDate = lastStartDate;
+
+  debugLog("config:", config);
 
   if (!gqlWsClient) {
     throw new Error("No WS client available")
   }
 
-  const subscription = useRef<{unsubscribe?: () => any}>({});
-  const lastDate = useRef<{unsubscribe?: () => any}>({});
-
   useEffect(() => {
 
-    console.log("subscription.current", subscription.current);
-    if (subscription.current.unsubscribe) {
-      subscription.current.unsubscribe();
-      delete (subscription.current.unsubscribe);
-    }
+    // console.log("--- useSubscription -- useEffect");
 
-    console.log("orig query1", query);
-    console.log("orig query1", print(query));
-    console.log("subscription query1", print(prepareSubscriptionQuery(query, config)));
-    console.log("delta query1", print(prepareDeltaQuery(query, config)));
+    if (finished) {
+      return;
+    }
 
     const subsQuery = prepareSubscriptionQuery(query, config);
 
+    const varsWithStartDate = Object.assign({}, variables)
+    varsWithStartDate[config.startDateVariable!] = config.startDate;
+
+    if (params.debug) {
+      debugLog("Subscribe with ", print(subsQuery));
+      debugLog("Variables ", varsWithStartDate);
+    }
     const sub = gqlWsClient
       .request({
         query: subsQuery,
-        variables
+        variables: varsWithStartDate
       })
       .subscribe({
         next(data) {
-          console.log("Got something: ", data)
+          // console.log("Got something: ", data)
           if (data.errors) {
             throw new Error(JSON.stringify(data.errors))
           }
           const res = getFirstValue(data.data)
-          if (onData) {
-            onData(res)
+          if (!res.length) {
+            return res;
           }
-          return res
+
+          // Unsubscribe
+          debugLog("Unsubscribe after initial data received");
+          sub.unsubscribe()
+
+          // Run delta query for all changed elements since lastStartDate
+          const deltaQuery = print(prepareDeltaQuery(query, config))
+          debugLog("Executing delta query: ", deltaQuery)
+          gqlHttpClient.request(deltaQuery, varsWithStartDate)
+            .then(res => {
+              // console.log("Delta result: ", res)
+              const list = getFirstValue(res)
+              const last = list[list.length - 1]
+              if (onData) {
+                onData(res)
+              }
+              // Reset last start date causing unsubscription from current
+              debugLog("Reset  lastStartDate: ", last[config.timestampField!])
+              setLastStartDate(last[config.timestampField!])
+            })
+            .catch(err => {
+              throw err;
+            })
         }
       })
-    subscription.current.unsubscribe = () => sub.unsubscribe()
+
+    // Save current sub in ref
+    subscription.current = sub;
+  }, [lastStartDate, finished])
 
 
-    // return new Promise((resolve, reject) => {
-    //   gqlWsClient
-    //     .request({
-    //       query,
-    //       variables
-    //     })
-    //     .subscribe({
-    //       next(data) {
-    //         resolve(data.data)
-    //       },
-    //       error: reject
-    //     })
-    // })
-
-
-    // subscription.current.unsubscribe = store.subscribe<T[]>(
-    //   query,
-    //   variables,
-    //   (res: T[]) => {
-    //     console.log("received: ", res);
-    //     for (const item of res) {
-    //       onData(item);
-    //     }
-    //   }
-    // )
-  }, dependencies)
-
-  return subscription;
+  // Return info and controls for managing the subscription
+  return {
+    unsubscribe: () => {
+      debugLog("Invoker called unsubscribe()")
+      if (!finished && subscription.current.unsubscribe) {
+        subscription.current.unsubscribe()
+        setFinished(true);
+      }
+    },
+    restart: (startDate?: string) => {
+      if (startDate) {
+        setLastStartDate(startDate);
+      }
+      setFinished(false);
+    },
+    lastStartDate,
+    finished,
+  };
 }
 
-//
-// // console.log("query1 hacked", JSON.stringify(query1.definitions[0], null, 2));
-//
-// console.log("orig query2", print(query2));
-// console.log("subscription query2", print(prepareSubscriptionQuery(query2)));
-// console.log("deltsa query2", print(prepareDeltaQuery(query2)));
-
-/**
- * 1.
- *
- * @param store an MST-GQL store
- * @param query query to run in the subscription
- * @param variables variables to pass to the subscription including a mandatory startDate parameter
- * @param onData callback called when new data is received via the subscription
- * @param dependencies dependent variables which when change cause the
- */
-// function useSubscription2<T>(
-//   store: StoreType,
-//   query: DocumentNode,
-//   variables: {
-//     startDate: string;
-//     [k: string]: any;
-//   },
-//   onData?: (item: T) => void,
-//   dependencies = [])
-// {
-//   const subscription = useRef<{unsubscribe?: () => any}>({});
-//   const lastDate = useRef<{unsubscribe?: () => any}>({});
-//
-//   useEffect(() => {
-//
-//     console.log("subscription.current", subscription.current);
-//     if (subscription.current.unsubscribe) {
-//       subscription.current.unsubscribe();
-//       delete (subscription.current.unsubscribe);
-//     }
-//
-//     subscription.current.unsubscribe = store.subscribe<T[]>(
-//       query,
-//       variables,
-//       (res: T[]) => {
-//         console.log("received: ", res);
-//         for (const item of res) {
-//           onData(item);
-//         }
-//       }
-//     )
-//   }, dependencies)
-//
-//   return subscription;
-// }

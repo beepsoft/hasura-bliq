@@ -1,6 +1,6 @@
 {
   "name": "hasura-hooks",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "React hooks for Hasura",
   "author": "Balazs E. Pataki",
   "license": "MIT",
@@ -17,7 +17,9 @@
   "devDependencies": {
     "@types/react": "^16.9.19",
     "@types/react-dom": "^16.9.5",
+    "await-to-js": "^2.1.1",
     "graphql": "^14.6.0",
+    "graphql-request": "^1.8.2",
     "graphql-tag": "^2.10.3",
     "microbundle": "^0.11.0",
     "mobx": "^5.15.4",

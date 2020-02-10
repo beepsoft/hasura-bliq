@@ -855,7 +855,7 @@ autoprefixer@^9.0.0:
     postcss "^7.0.26"
     postcss-value-parser "^4.0.2"
 
-await-to-js@^2.0.1:
+await-to-js@^2.0.1, await-to-js@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/await-to-js/-/await-to-js-2.1.1.tgz#c2093cd5a386f2bb945d79b292817bbc3f41b31b"
   integrity sha512-CHBC6gQGCIzjZ09tJ+XmpQoZOn4GdWePB4qUweCaKNJ0D3f115YdhmYVTZ4rMVpiJ3cFzZcTYK1VMYEICV4YXw==
