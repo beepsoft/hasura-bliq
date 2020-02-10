@@ -12,6 +12,9 @@ import {SubscriptionClient} from "subscriptions-transport-ws";
 import {GraphQLClient} from "graphql-request";
 import to from "await-to-js";
 import moment from "moment";
+import {StoreType} from "mst-gql/dist/MSTGQLStore";
+import {getEnv} from "mobx-state-tree";
+import gql from "graphql-tag"
 
 // https://github.com/hasura/graphql-engine/issues/2735
 // https://github.com/hasura/graphql-engine/issues/3517
@@ -322,7 +325,7 @@ export type QueryConfig = {
 export type SubscriptionParams<T> = {
   gqlWsClient: SubscriptionClient;
   gqlHttpClient: GraphQLClient;
-  query: DocumentNode;
+  query: DocumentNode | string;
   startDate?: string;
   config?: QueryConfig;
   variables?: {
@@ -386,7 +389,8 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
       return;
     }
 
-    const subsQuery = prepareSubscriptionQuery(query, config);
+    const queryDoc = typeof query === "string" ? gql(query) : query;
+    const subsQuery = prepareSubscriptionQuery(queryDoc, config);
 
     const varsWithStartDate = Object.assign({}, variables)
     varsWithStartDate[config.startDateVariable!] = config.startDate;
@@ -416,7 +420,7 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
           sub.unsubscribe()
 
           // Run delta query for all changed elements since lastStartDate
-          const deltaQuery = print(prepareDeltaQuery(query, config))
+          const deltaQuery = print(prepareDeltaQuery(queryDoc, config))
           debugLog("Executing delta query: ", deltaQuery)
           gqlHttpClient.request(deltaQuery, varsWithStartDate)
             .then(res => {
@@ -461,3 +465,60 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
   };
 }
 
+export type SubscriptionParamsWithStore<T> = {
+  store: StoreType;
+  query: DocumentNode | string;
+  startDate?: string;
+  config?: QueryConfig;
+  variables?: {
+    [k: string]: any;
+  };
+  onData?: (item: T) => void;
+  debug?: boolean
+}
+
+/**
+ * Like useSubscription() but with an MST-GQL store (configured with a WS and HTTP GQL client.
+ * The objects received via the subscription is merged in the store and then forwarded to the
+ * invoker's onData function
+ * @param params
+ */
+export function useSubscriptionWithStore<T>(params: SubscriptionParamsWithStore<T>)
+{
+  const debugLog = (msg: string, obj?: any) =>
+  {
+    if (params.debug) {
+      console.log("-- useSubscription: "+msg, obj);
+    }
+  }
+
+  // Get the configured WS client from the store
+  const {
+    gqlWsClient,
+    gqlHttpClient
+  }: {
+    gqlWsClient: SubscriptionClient
+    gqlHttpClient: GraphQLClient
+  } = getEnv(params.store)
+
+  const storeHandler = (data: any) => {
+    debugLog("Raw data received: ", data)
+    const merged = params.store.merge(getFirstValue(data));
+    debugLog("Merged data: ", merged)
+    if (params.onData) {
+      params.onData(merged)
+    }
+  }
+
+  const subscriptionInfo = useSubscription({
+    gqlWsClient,
+    gqlHttpClient,
+    query: params.query,
+    config: params.config,
+    variables: params.variables,
+    onData: storeHandler,
+    debug: params.debug
+  })
+
+  return subscriptionInfo;
+}

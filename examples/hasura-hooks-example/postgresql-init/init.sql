@@ -2,9 +2,11 @@ DROP table IF EXISTS message CASCADE;
 
 create table message
 (
-    id serial not null
+    id bigserial not null
         constraint message_pkey
-            primary key,
+            primary key
+        constraint message_id_key
+            unique,
     created_at timestamp,
     updated_at timestamp,
     message text not null

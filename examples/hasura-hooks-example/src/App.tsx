@@ -5,6 +5,7 @@ import {AppStoreContext, appStore, history} from "./store";
 import {StoreContext} from "./models";
 import {Router, Route, Switch} from 'react-router'
 import {ExamplePage} from "./ExamplePage";
+import {ExamplePage2} from "./ExamplePage2";
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Router history={history}>
           <Switch>
             <Route exact path="/" component={ExamplePage} />
+            <Route exact path="/2" component={ExamplePage2} />
           </Switch>
         </Router>
       </StoreContext.Provider>

@@ -25,27 +25,6 @@ const RouterStore = types
     .model({
         router: RouterModel,
     })
-    .actions(self => {
-        // Just a dummy to see of how actions get merged. NOTE: we need to somehow "namespace" actions in this case
-        function muhaha() {
-            console.log('muhaha')
-        }
-
-        return {
-            muhaha,
-        }
-    });
-
-const GlobalsModel = types
-    .model('GlobalsModel', {
-        jwt: types.maybeNull(types.string),
-    })
-    .views(self => ({}))
-    .actions(self => ({
-        setJwt(jwt: string) {
-            self.jwt = jwt
-        },
-    }));
 
 //
 // AppStore: combination of RouterStore, GqlRootStore, globals and page specific stores
@@ -53,9 +32,6 @@ const GlobalsModel = types
 const AppStore = types.model('AppStore', {
     routerStore: RouterStore,
     gqlStore: types.late(() => GqlRootStore),
-    globals: types.optional(GlobalsModel, {}),
-    // workInstructionListPage: types.optional(WorkInstructionListPageModel, {}),
-    // workInstructionListPage2: types.optional(WorkInstructionListPage2Model, {}),
 });
 
 export interface AppStoreType extends Instance<typeof AppStore.Type> {}
@@ -70,9 +46,6 @@ export const appStore = AppStore.create(
             router: routerModel,
         },
         gqlStore: {},
-        globals: {
-            jwt: null,
-        },
         // workInstructionListPage: {}
     },
     // Configure RootStore
