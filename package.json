@@ -1,7 +1,7 @@
 {
-  "name": "hasura-hooks",
-  "version": "0.2.0",
-  "description": "React hooks for Hasura",
+  "name": "hasura-bliq",
+  "version": "0.3.0",
+  "description": "Hasura Better Live Query - React hooks to receive every record matching a subscription",
   "author": "Balazs E. Pataki",
   "license": "MIT",
   "main": "dist/index.js",

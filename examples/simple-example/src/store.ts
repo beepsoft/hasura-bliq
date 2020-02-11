@@ -52,14 +52,14 @@ export const appStore = AppStore.create(
     {
         gqlHttpClient: createHttpClient('http://localhost:6001/v1/graphql', {
             headers: {
-                'X-Hasura-Admin-Secret': 'hasura-hooks',
+                'X-Hasura-Admin-Secret': 'hasura-bliq',
             },
         }),
         gqlWsClient: new SubscriptionClient("ws://localhost:6001/v1/graphql", {
             reconnect: true,
             connectionParams: {
                 headers: {
-                    "X-Hasura-Admin-Secret": 'hasura-hooks'
+                    "X-Hasura-Admin-Secret": 'hasura-bliq'
                 }
             }
 

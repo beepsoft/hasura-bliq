@@ -322,7 +322,7 @@ export type QueryConfig = {
   startDateVariable?: string;
 }
 
-export type SubscriptionParams<T> = {
+export type LiveQueryParams<T> = {
   gqlWsClient: SubscriptionClient;
   gqlHttpClient: GraphQLClient;
   query: DocumentNode | string;
@@ -335,12 +335,12 @@ export type SubscriptionParams<T> = {
   debug?: boolean
 }
 
-export function useSubscription<T>(params: SubscriptionParams<T>)
+export function useLiveQuery<T>(params: LiveQueryParams<T>)
 {
   const debugLog = (msg: string, obj?: any) =>
   {
     if (params.debug) {
-      console.log("-- useSubscription: "+msg, obj);
+      console.log("-- useLiveQuery: "+msg, obj);
     }
   }
 
@@ -369,7 +369,7 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
   const [finished, setFinished] = useState(false)
 
   // Save a ref to an unsubscribe function which can be called indirectly by the
-  // invoker of  useSubscription() to finish subscriptions
+  // invoker of  useLiveQuery() to finish subscriptions
   const subscription = useRef<{unsubscribe?: () => any}>({});
 
   // Make sure config contains the lastStartDate we start from
@@ -383,7 +383,7 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
 
   useEffect(() => {
 
-    // console.log("--- useSubscription -- useEffect");
+    // console.log("--- useLiveQuery -- useEffect");
 
     if (finished) {
       return;
@@ -465,7 +465,7 @@ export function useSubscription<T>(params: SubscriptionParams<T>)
   };
 }
 
-export type SubscriptionParamsWithStore<T> = {
+export type LiveQueryParamsWithStore<T> = {
   store: StoreType;
   query: DocumentNode | string;
   startDate?: string;
@@ -478,17 +478,17 @@ export type SubscriptionParamsWithStore<T> = {
 }
 
 /**
- * Like useSubscription() but with an MST-GQL store (configured with a WS and HTTP GQL client.
+ * Like useLiveQuery() but with an MST-GQL store (configured with a WS and HTTP GQL client.
  * The objects received via the subscription is merged in the store and then forwarded to the
  * invoker's onData function
  * @param params
  */
-export function useSubscriptionWithStore<T>(params: SubscriptionParamsWithStore<T>)
+export function useLiveQueryWithStore<T>(params: LiveQueryParamsWithStore<T>)
 {
   const debugLog = (msg: string, obj?: any) =>
   {
     if (params.debug) {
-      console.log("-- useSubscription: "+msg, obj);
+      console.log("-- useLiveQuery: "+msg, obj);
     }
   }
 
@@ -510,7 +510,7 @@ export function useSubscriptionWithStore<T>(params: SubscriptionParamsWithStore<
     }
   }
 
-  const subscriptionInfo = useSubscription({
+  const liveQueryInfo = useLiveQuery({
     gqlWsClient,
     gqlHttpClient,
     query: params.query,
@@ -520,5 +520,5 @@ export function useSubscriptionWithStore<T>(params: SubscriptionParamsWithStore<
     debug: params.debug
   })
 
-  return subscriptionInfo;
+  return liveQueryInfo;
 }

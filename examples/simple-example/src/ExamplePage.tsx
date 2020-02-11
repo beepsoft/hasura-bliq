@@ -2,15 +2,13 @@ import React, {useEffect, useRef, useState} from 'react'
 import {useAppStore} from "./store";
 import {observer} from 'mobx-react'
 import {getEnv, getSnapshot} from "mobx-state-tree";
-import {useSubscription} from "hasura-hooks";
+import {useLiveQuery} from "hasura-bliq";
 import gql from 'graphql-tag';
 import moment from "moment";
 import {SubscriptionClient} from "subscriptions-transport-ws";
 import {GraphQLClient} from "graphql-request";
-import {useSubscriptionWithStore} from "hasura-hooks";
-import {StoreType} from "mst-gql/dist/MSTGQLStore";
 
-interface ExamplePage2Props {}
+interface ExamplePageProps {}
 
 
 const query = gql`
@@ -30,14 +28,24 @@ const query = gql`
 
 //console.log("query json", JSON.stringify(query, null, 2));
 
-export const ExamplePage2 = observer((props: ExamplePage2Props) => {
+export const ExamplePage = observer((props: ExamplePageProps) => {
   const appStore = useAppStore()
+
+  // Get the configured WS client from the store
+  const {
+    gqlWsClient,
+    gqlHttpClient
+  }: {
+    gqlWsClient: SubscriptionClient
+    gqlHttpClient: GraphQLClient
+  } = getEnv(appStore.gqlStore)
 
   const [resultList, setResultList] = useState<any[]>([])
   const [subsTurnoffLimit, setSubsTurnoffLimit] = useState(10)
 
-  const subscriptionInfo = useSubscriptionWithStore({
-    store: appStore.gqlStore,
+  const liveQueryInfo = useLiveQuery({
+    gqlWsClient,
+    gqlHttpClient,
     query: query,
     startDate: moment.utc().format(),
     config: {
@@ -53,8 +61,8 @@ export const ExamplePage2 = observer((props: ExamplePage2Props) => {
   useEffect(() => {
     // If more than 10 received, finish subscription
     if (resultList.length >= subsTurnoffLimit) {
-      if (subscriptionInfo) {
-        subscriptionInfo.unsubscribe()
+      if (liveQueryInfo) {
+        liveQueryInfo.unsubscribe()
       }
       return;
     }
@@ -68,7 +76,7 @@ export const ExamplePage2 = observer((props: ExamplePage2Props) => {
       will not be delivered here)</div>
       <button onClick={()=>{
         setSubsTurnoffLimit(subsTurnoffLimit+10)
-        subscriptionInfo.restart(moment.utc().format())
+        liveQueryInfo.restart(moment.utc().format())
       }}>Allow 10 more</button>
       {resultList.map((value, index) => {
         return <div key={index}>{value["id"]}. {JSON.stringify(value)}</div>

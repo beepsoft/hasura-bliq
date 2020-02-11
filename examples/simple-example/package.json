@@ -1,5 +1,5 @@
 {
-  "name": "hasura-hooks-example",
+  "name": "simple-example",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -35,7 +35,7 @@
     "relative-deps": "^1.0.0"
   },
   "relativeDependencies": {
-    "hasura-hooks": "../../"
+    "hasura-bliq": "../../"
   },
   "scripts": {
     "start": "react-scripts start",
