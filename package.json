@@ -1,0 +1,37 @@
+{
+  "name": "hasura-bliq",
+  "version": "0.3.0",
+  "description": "Hasura Better Live Query - React hooks to receive every record matching a subscription",
+  "author": "Balazs E. Pataki",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "source": "src/index.ts",
+  "umd:main": "dist/index.umd.js",
+  "module": "dist/index.module.js",
+  "jsnext:main": "dist/index.module.js",
+  "react-native": "dist/index.module.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/react": "^16.9.19",
+    "@types/react-dom": "^16.9.5",
+    "await-to-js": "^2.1.1",
+    "graphql": "^14.6.0",
+    "graphql-request": "^1.8.2",
+    "graphql-tag": "^2.10.3",
+    "microbundle": "^0.11.0",
+    "mobx": "^5.15.4",
+    "mobx-state-tree": "^3.15.0",
+    "moment": "^2.24.0",
+    "mst-gql": "^0.7.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "subscriptions-transport-ws": "^0.9.16",
+    "typescript": "^3.7.5"
+  },
+  "scripts": {
+    "build": "microbundle --no-compress --external mobx,mobx-react,mobx-state-tree,graphql-tag,graphql,react,react-dom,graphql-request"
+  }
+}
